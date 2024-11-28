@@ -6,7 +6,7 @@ from cashews import cache
 from pyrogram import Client
 from pyrogram.types import InputMediaPhoto, InputMediaAnimation, InputMediaVideo
 from pyrogram.enums import ParseMode
-from pyrogram.errors import FloodWait
+from pyrogram.errors import FloodWait, WebpageCurlFailed
 
 from lofter.client.lofter import LofterClient
 from lofter.models.artwork import ArtWork, ArtWorkImage, ImageType
@@ -21,6 +21,12 @@ def flood_wait():
         async def wrapper(*args, **kwargs):
             try:
                 return await function(*args, **kwargs)
+            except WebpageCurlFailed:
+                try:
+                    url = args[0].url
+                except IndexError:
+                    url = ""
+                logs.warning(f"遇到 WebpageCurlFailed，跳过此贴！ url[%s]", url)
             except FloodWait as e:
                 logs.warning(f"遇到 FloodWait，等待 {e.value} 秒后重试！")
                 await asyncio.sleep(e.value + 1)
@@ -81,6 +87,8 @@ class Timeline:
                 await PostCache.set(post)
             except Exception as exc:
                 logs.warning("Timeline pull task send posts failed exc[%s]", str(exc), exc_info=True)
+            if self.queue.qsize() % 10 == 0:
+                logs.info("Timeline pull task remain %s", self.queue.qsize())
 
         logs.info("Timeline pull task stopped")
 
