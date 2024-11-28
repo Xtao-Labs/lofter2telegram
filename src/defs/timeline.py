@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from typing import Optional
 
 from cashews import cache
@@ -44,21 +45,20 @@ class Timeline:
         self.bot = bot
         self.client = LofterClient()
         self.queue = asyncio.Queue()
+        self.keys = []
 
     async def push_one(self, tag: str):
         posts = await self.client.get_web_tag_posts(tag, page_size=30)
         posts.reverse()
-        keys = []
         for post in posts:
             if not post.images:
                 # TODO: 发送长文
                 continue
             key = PostCache.key(post)
-            if await PostCache.get(post) or key in keys:
+            if await PostCache.get(post) or key in self.keys:
                 continue
-            keys.append(key)
+            self.keys.append(key)
             await self.queue.put(post)
-        keys.clear()
 
     async def push(self):
         logs.info("开始检查更新")
@@ -81,6 +81,9 @@ class Timeline:
                 continue
 
             try:
+                key = PostCache.key(post)
+                with contextlib.suppress(ValueError):
+                    self.keys.pop(self.keys.index(key))
                 if len(post.images) == 1:
                     await self.send_single_to_user(post)
                 else:
