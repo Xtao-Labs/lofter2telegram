@@ -48,6 +48,7 @@ class Timeline:
         self.keys = []
 
     async def push_one(self, tag: str):
+        logs.info("Timeline push task req tag %s", tag)
         posts = await self.client.get_web_tag_posts(tag, page_size=30)
         posts.reverse()
         for post in posts:
