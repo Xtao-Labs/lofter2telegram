@@ -66,8 +66,15 @@ class Timeline:
         tags = await cache.get("sub.tags")
         if not tags:
             return
+        tasks = []
         for tag in tags:
-            await self.push_one(tag)
+            tasks.append(self.push_one(tag))
+            if len(tasks) >= 3:
+                await asyncio.gather(*tasks)
+                tasks.clear()
+        if tasks:
+            await asyncio.gather(*tasks)
+            tasks.clear()
         logs.info("检查更新完成")
         logs.info("Timeline pull task remain %s", self.queue.qsize())
 
