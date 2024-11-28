@@ -23,7 +23,7 @@ def flood_wait():
                 return await function(*args, **kwargs)
             except (WebpageCurlFailed, MediaEmpty):
                 try:
-                    url = args[0].url
+                    url = args[1].url
                 except IndexError:
                     url = ""
                 logs.warning(f"遇到 WebpageCurlFailed / MediaEmpty，跳过此贴！ url[%s]", url)
