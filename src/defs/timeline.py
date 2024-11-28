@@ -47,6 +47,7 @@ class Timeline:
 
     async def push_one(self, tag: str):
         posts = await self.client.get_web_tag_posts(tag, page_size=30)
+        posts.reverse()
         keys = []
         for post in posts:
             if not post.images:
