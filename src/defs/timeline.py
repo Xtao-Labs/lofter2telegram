@@ -68,6 +68,7 @@ class Timeline:
         for tag in tags:
             await self.push_one(tag)
         logs.info("检查更新完成")
+        logs.info("Timeline pull task remain %s", self.queue.qsize())
 
     async def pull(self):
         logs.info("Timeline pull task started")
@@ -81,9 +82,6 @@ class Timeline:
                 continue
 
             try:
-                key = PostCache.key(post)
-                with contextlib.suppress(ValueError):
-                    self.keys.pop(self.keys.index(key))
                 if len(post.images) == 1:
                     await self.send_single_to_user(post)
                 else:
@@ -91,6 +89,10 @@ class Timeline:
                 await PostCache.set(post)
             except Exception as exc:
                 logs.warning("Timeline pull task send posts failed exc[%s]", str(exc), exc_info=True)
+            finally:
+                key = PostCache.key(post)
+                with contextlib.suppress(ValueError):
+                    self.keys.pop(self.keys.index(key))
             if self.queue.qsize() % 10 == 0:
                 logs.info("Timeline pull task remain %s", self.queue.qsize())
 
