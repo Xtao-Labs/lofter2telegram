@@ -11,19 +11,15 @@ from src.core.bot import TelegramBot
 
 
 class TagsBotPlugin(BaseComponent):
-    def __init__(
-        self, telegram_bot: TelegramBot
-    ):
+    def __init__(self, telegram_bot: TelegramBot):
         @telegram_bot.bot.on_message(
-            filters=filters.command("add_tag")
-            & filters.user(config.bot.owner)
+            filters=filters.command("add_tag") & filters.user(config.bot.owner)
         )
         async def __add_tag(_, message: Message):
             await self.add_tag(message)
 
         @telegram_bot.bot.on_message(
-            filters=filters.command("remove_tag")
-            & filters.user(config.bot.owner)
+            filters=filters.command("remove_tag") & filters.user(config.bot.owner)
         )
         async def __remove_tag(_, message: Message):
             await self.remove_tag(message)

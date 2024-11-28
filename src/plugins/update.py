@@ -14,15 +14,12 @@ _lock = Lock()
 
 
 class UpdateBotPlugin(BaseComponent):
-    def __init__(
-        self, telegram_bot: TelegramBot, scheduler: TimeScheduler
-    ):
+    def __init__(self, telegram_bot: TelegramBot, scheduler: TimeScheduler):
         self.timeline = Timeline(telegram_bot.bot)
         self.consumer_task = telegram_bot.bot.loop.create_task(self.timeline.pull())
 
         @telegram_bot.bot.on_message(
-            filters=filters.command("check_update")
-            & filters.user(config.bot.owner)
+            filters=filters.command("check_update") & filters.user(config.bot.owner)
         )
         async def _update_all(_, message: "Message"):
             if _lock.locked():

@@ -27,7 +27,9 @@ def flood_wait():
                     url = args[1].url
                 except IndexError:
                     url = ""
-                logs.warning(f"遇到 WebpageCurlFailed / MediaEmpty，跳过此贴！ url[%s]", url)
+                logs.warning(
+                    f"遇到 WebpageCurlFailed / MediaEmpty，跳过此贴！ url[%s]", url
+                )
             except FloodWait as e:
                 logs.warning(f"遇到 FloodWait，等待 {e.value} 秒后重试！")
                 await asyncio.sleep(e.value + 1)
@@ -49,7 +51,11 @@ class Timeline:
 
     async def push_one(self, tag: str):
         logs.info("Timeline push task req tag %s", tag)
-        posts = await self.client.get_web_tag_posts(tag, page_size=30)
+        try:
+            posts = await self.client.get_web_tag_posts(tag, page_size=30)
+        except Exception as e:
+            logs.exception("Timeline push task exception %s", str(e), exc_info=True)
+            return
         posts.reverse()
         for post in posts:
             if not post.images:
@@ -86,7 +92,7 @@ class Timeline:
                 if not post:
                     raise asyncio.TimeoutError
             except asyncio.TimeoutError:
-                await asyncio.sleep(.5)
+                await asyncio.sleep(0.5)
                 continue
 
             try:
@@ -96,7 +102,11 @@ class Timeline:
                     await self.send_to_user(post)
                 await PostCache.set(post)
             except Exception as exc:
-                logs.warning("Timeline pull task send posts failed exc[%s]", str(exc), exc_info=True)
+                logs.warning(
+                    "Timeline pull task send posts failed exc[%s]",
+                    str(exc),
+                    exc_info=True,
+                )
             finally:
                 key = PostCache.key(post)
                 with contextlib.suppress(ValueError):
@@ -121,21 +131,27 @@ class Timeline:
         elif image.type == ImageType.GIF:
             func = bot.send_video
         return await func(
-                config.push.chat_id,
-                url,
-                caption=text,
-                reply_to_message_id=config.push.topic_id,
-                parse_mode=ParseMode.HTML,
-            )
+            config.push.chat_id,
+            url,
+            caption=text,
+            reply_to_message_id=config.push.topic_id,
+            parse_mode=ParseMode.HTML,
+        )
 
     @staticmethod
     def get_media_input(image: ArtWorkImage, text: Optional[str] = None):
         if image.type == ImageType.STATIC:
-            return InputMediaPhoto(media=image.format_url, caption=text, parse_mode=ParseMode.HTML)
+            return InputMediaPhoto(
+                media=image.format_url, caption=text, parse_mode=ParseMode.HTML
+            )
         elif image.type == ImageType.GIF:
-            return InputMediaAnimation(media=image.url, caption=text, parse_mode=ParseMode.HTML)
+            return InputMediaAnimation(
+                media=image.url, caption=text, parse_mode=ParseMode.HTML
+            )
         elif image.type == ImageType.VIDEO:
-            return InputMediaVideo(media=image.url, caption=text, parse_mode=ParseMode.HTML)
+            return InputMediaVideo(
+                media=image.url, caption=text, parse_mode=ParseMode.HTML
+            )
 
     @flood_wait()
     async def send_to_user(self, post: ArtWork):
@@ -144,7 +160,9 @@ class Timeline:
         data = []
         images = post.images[:10]  # todo: 发送超过十张图片
         for idx, img in enumerate(images):
-            if i := self.get_media_input(img, text if (idx == len(images) - 1) else None):
+            if i := self.get_media_input(
+                img, text if (idx == len(images) - 1) else None
+            ):
                 data.append(i)
         return await bot.send_media_group(
             config.push.chat_id,

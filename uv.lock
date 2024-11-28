@@ -198,7 +198,7 @@ wheels = [
 [[package]]
 name = "lofter-py"
 version = "0.1.0"
-source = { git = "https://github.com/Xtao-Labs/lofter.py#b0a452ce93537a229f7bf041dad68c9584fb13c5" }
+source = { git = "https://github.com/Xtao-Labs/lofter.py#8a8fbfaadc39086b55f8876c41b85341e2da190a" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
